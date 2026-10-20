@@ -4,51 +4,71 @@ on:
   push:
     branches:
       - prod
+  workflow_dispatch:
+
+concurrency:
+  group: task-tracker-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    # GitHub создаёт временную виртуальную машину Linux.
     runs-on: ubuntu-latest
-
-    # Secrets берутся из GitHub Environment с именем production.
     environment: production
 
+    # Обычная Environment variable, не secret.
+    env:
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+
     steps:
-      # Скачиваем текущий commit на машину GitHub Actions.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Устанавливаем Node.js и включаем кеш npm.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      # Устанавливаем точные версии из package-lock.json.
       - name: Install dependencies
         run: npm ci
 
-      # Проверяем, что production-сборка создаётся без ошибок.
       - name: Build application
         run: npm run build
 
-      # Настраиваем SSH-доступ к серверу для rsync и удалённых команд.
       - name: Configure SSH
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      # Копируем текущий commit на сервер. Репозиторий и git на сервере не нужны.
+      - name: Prepare deploy directory
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          test -n "$DEPLOY_DIR"
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" \
+            "mkdir -p '$DEPLOY_DIR'"
+
+      - name: Create production environment file
+        env:
+          PRODUCTION_ENV: ${{ secrets.ENV }}
+        run: |
+          test -n "$PRODUCTION_ENV"
+          printf '%s\n' "$PRODUCTION_ENV" > .env.prod
+          chmod 600 .env.prod
+
       - name: Upload project
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
           rsync -az --delete \
             --exclude='.git/' \
@@ -57,13 +77,27 @@ jobs:
             --exclude='dist/' \
             --exclude='.env' \
             --exclude='.env.*' \
-            ./ "$SERVER_USER@$SERVER_HOST:/var/www/project/"
+            -e "ssh -i ~/.ssh/id_ed25519" \
+            ./ "$SSH_USER@$SSH_HOST:$DEPLOY_DIR/"
 
-      # Пересобираем и перезапускаем приложение из загруженных файлов.
+      - name: Upload production environment file
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          scp -i ~/.ssh/id_ed25519 .env.prod \
+            "$SSH_USER@$SSH_HOST:$DEPLOY_DIR/.env.prod"
+
       - name: Start application
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
         run: |
-          ssh "$SERVER_USER@$SERVER_HOST" \
-            'cd /var/www/project && docker compose up -d --build && docker image prune -f && curl --fail http://localhost/'
+          ssh -i ~/.ssh/id_ed25519 "$SSH_USER@$SSH_HOST" \
+            "cd '$DEPLOY_DIR' && docker compose --env-file .env.prod up -d --build --remove-orphans && docker image prune -f && curl --fail http://localhost/"
+
+      - name: Remove temporary SSH key and environment file
+        if: always()
+        run: |
+          shred -u ~/.ssh/id_ed25519 2>/dev/null || rm -f ~/.ssh/id_ed25519
+          shred -u .env.prod 2>/dev/null || rm -f .env.prod
