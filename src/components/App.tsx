@@ -20,6 +20,8 @@ export type Task = {
 // ]
 
 function App() {
+  const apiUrl = import.meta.env.VITE_API_URL
+
   const [tasks, setTasks] = useState<Task[]>([]);
   // Состояние для переключение контеста
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -60,12 +62,12 @@ function App() {
     }
   }
 
-
   useEffect(() => {
     // const savedTasks = localStorage.getItem('tasks')
     // setTasks(JSON.parse(savedTasks ?? '[]'))
     // fetchData()
     fetchData()
+    console.log(apiUrl)
   }, [])
 
 
