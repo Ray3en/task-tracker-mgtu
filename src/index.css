@@ -5,6 +5,18 @@
   box-sizing: border-box;
 }
 
+ul {
+  display: flex;
+  gap: 10px;
+}
+
+.content{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
 .add-form-light,
 .todo-list-light {
   color: #252525;
