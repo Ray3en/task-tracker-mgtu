@@ -14,7 +14,7 @@ function Header() {
 
         <header className={`header-${theme}`}>
             <h2>Task manager</h2>
-            <ul>                
+            <ul>
                 <Link to={'/'}>
                     <ol>Home</ol>
                 </Link>
@@ -28,14 +28,20 @@ function Header() {
                     <ol>Tasks</ol>
                 </Link>
             </ul>
-            <label>
-                <input
-                    type="checkbox" role="switch"
-                    checked={theme === 'dark'}
-                    onChange={toggleTheme}
-                />
-                Темная тема
-            </label>
+            <div>
+                <label>
+                    <input
+                        type="checkbox" role="switch"
+                        checked={theme === 'dark'}
+                        onChange={toggleTheme}
+                    />
+                    Темная тема
+                </label>
+                <Link to={'/login'}>
+                    <p>Войти / зарегистрироваться</p>
+                </Link>
+            </div>
+
         </header>
     )
 }

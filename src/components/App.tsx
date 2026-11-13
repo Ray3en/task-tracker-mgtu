@@ -9,6 +9,8 @@ import Layout from '../Layout';
 import AuthLayout from '../AuthLayout';
 import ProductsPage from '../pages/ProductsPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
+import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
 
 function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -29,8 +31,8 @@ function App() {
             <Route path='*' element={<h2>Not found</h2>} />
           </Route>
           <Route element={<AuthLayout />}>
-            <Route path='/login' element={<h2>Login</h2>} />
-            <Route path='/register' element={<h2>Register</h2>} />
+            <Route path='/login' element={<LoginPage/>} />
+            <Route path='/register' element={<RegisterPage/>} />
           </Route>
         </Routes>
       </ThemeContext.Provider>
