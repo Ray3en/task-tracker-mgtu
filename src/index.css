@@ -11,6 +11,7 @@ ul {
 }
 
 .content{
+  /* width: 100wv; */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -53,6 +54,7 @@ header {
 
 .todo-list{
   display: flex;
+  width: 100%;
   justify-content: center;
   align-items: center;
   flex-direction: column;
@@ -85,6 +87,7 @@ header {
 
 .add-form{
   display: flex;
+    width: 100%;
   align-items: center;
   justify-content: center;
   gap: 16px;

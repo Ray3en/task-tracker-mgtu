@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate } from "react-router"
+import { Link } from "react-router"
 import { fetchProducts, type ApiProduct } from "../api/products.api"
 
 
@@ -16,7 +16,7 @@ function ProductsPage() {
     }, [])
 
     return (
-        <section className="content">
+        <section className="flex flex-col justify-center">
             {products.map(product => (
                 <Link key={product.id} to={`/product/${product.id}`}>
                     <li>

@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import Header from './Header'
+import { useState } from 'react'
 import '../index.css'
 import { ThemeContext } from '../context/themeContext';
 import { Navigate, Route, Routes } from 'react-router';
