@@ -1,25 +1,48 @@
-// src/api/products.api.ts
-export type ApiProduct = {
+import { apiClient } from "./apiClient";
+
+type ProductItemResponse = {
   id: number;
-  title: string;
-  description: string;
+  name: string;
   price: number;
-  thumbnail: string;
+  description: string;
+  image: string;
+  discountPrice: number | null;
 };
- 
-type ProductsResponse = { products: ApiProduct[] };
- 
-async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return (await response.json()) as T;
+
+type ProductsResponse = {
+  items: ProductItemResponse[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
+};
+
+type ProductsParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+export type CreateProductData = {
+  name: string;
+  price: number;
+  description: string;
+};
+
+
+export async function getProducts(params?: ProductsParams): Promise<ProductsResponse> {
+  const response = await apiClient.get<ProductsResponse>("/products", { params });
+  return response.data;
 }
- 
-export async function fetchProducts() {
-  const data = await getJson<ProductsResponse>("https://dummyjson.com/products");
-  return data.products;
+
+export async function getProductDetail(id: string): Promise<ProductItemResponse> {
+  const response = await apiClient.get<ProductItemResponse>(`/products/${id}`);
+  return response.data;
 }
- 
-export function fetchProduct(id: string) {
-  return getJson<ApiProduct>(`https://dummyjson.com/products/${id}`);
+
+export async function createProduct(data: CreateProductData): Promise<ProductItemResponse> {
+  const response = await apiClient.post<ProductItemResponse>("/products", data);
+  return response.data;
 }

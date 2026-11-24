@@ -1,8 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Link as MuiLink, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Button, Link as MuiLink, Paper, Stack, TextField, Typography } from "@mui/material";
+import { isAxiosError } from "axios";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import z from "zod";
+import { login } from "../api/auth.api";
 
 const loginSchema = z.object({
     email: z.string().trim().min(1, "Введите email").email("Введите корректный email"),
@@ -12,6 +15,9 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 function LoginPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [submitError, setSubmitError] = useState("");
 
     const {
         register,
@@ -24,9 +30,22 @@ function LoginPage() {
         mode: "onTouched",
     })
 
-    const onSubmit = (data: LoginValues) => {
-        console.log(data)
-        reset()
+    const onSubmit = async (data: LoginValues) => {
+        setSubmitError("");
+
+        try {
+            const response = await login(data.email, data.password);
+            localStorage.setItem("accessToken", response.token);
+            reset();
+            const destination = (location.state as { from?: string } | null)?.from ?? "/profile";
+            navigate(destination, { replace: true });
+        } catch (error) {
+            setSubmitError(
+                isAxiosError(error) && typeof error.response?.data?.message === "string"
+                    ? error.response.data.message
+                    : "Не удалось выполнить вход",
+            );
+        }
     }
 
 
@@ -38,6 +57,7 @@ function LoginPage() {
             </Stack>
 
             <Stack component="form" onSubmit={handleSubmit(onSubmit)} noValidate spacing={2.5}>
+                {submitError && <Alert severity="error">{submitError}</Alert>}
                 <TextField label="Email" type="email" autoComplete="email" autoFocus fullWidth
                     {...register("email")}
                     error={Boolean(errors.email)}

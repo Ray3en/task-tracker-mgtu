@@ -27,6 +27,9 @@ function Header() {
                 <Link to={'/tasks'}>
                     <ol>Tasks</ol>
                 </Link>
+                <Link to={'/profile'}>
+                    <ol>Profile</ol>
+                </Link>
             </ul>
             <div>
                 <label>
