@@ -10,8 +10,6 @@ import ProductsPage from '../pages/ProductsPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
-import ProfilePage from '../pages/ProfilePage';
-import ProtectedRoute from './ProtectedRoute';
 import CreateProductPage from '../pages/CreateProductPage';
 
 function App() {
@@ -30,9 +28,6 @@ function App() {
             <Route path='/products' element={<ProductsPage />} />
             <Route path='/product/:id' element={<ProductDetailPage />} />
             <Route path='/products/create' element={<CreateProductPage />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path='/profile' element={<ProfilePage />} />
-            </Route>
             <Route path='/about' element={<AboutPage />} />
             <Route path='*' element={<h2>Not found</h2>} />
           </Route>

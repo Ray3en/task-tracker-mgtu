@@ -1,15 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
+  Avatar,
   Box,
   Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardMedia,
   CircularProgress,
   Container,
-  Grid,
+  Divider,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Paper,
   Typography,
 } from "@mui/material";
 import { Link } from "react-router";
@@ -43,40 +45,35 @@ function ProductsPage() {
         Добавить товар
       </Button>
 
-      <Grid container spacing={1.5}>
+      <Paper variant="outlined">
+        <List disablePadding sx={{ display: "block" }}>
         {data.items.map((product) => (
-          <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card variant="outlined">
-              <CardMedia
-                component="img"
-                height="120"
-                image={`${baseUrl}${product.image}`}
-                alt={product.name}
-                sx={{ objectFit: "cover" }}
-              />
-              <CardContent sx={{ p: 1.5 }}>
-                <Typography variant="subtitle1">{product.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {product.discountPrice ?? product.price} ₽
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ px: 1.5, pt: 0 }}>
-                <Button
-                  size="small"
-                  component={Link}
-                  to={`/product/${product.id}`}
-                >
+          <Box key={product.id}>
+            <ListItem
+              secondaryAction={
+                <Button component={Link} to={`/product/${product.id}`}>
                   Подробнее
                 </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+              }
+            >
+              <ListItemAvatar>
+                <Avatar
+                  variant="rounded"
+                  src={`${baseUrl}${product.image}`}
+                  alt={product.name}
+                  sx={{ width: 56, height: 56, mr: 2 }}
+                />
+              </ListItemAvatar>
+              <ListItemText
+                primary={product.name}
+                secondary={`${product.discountPrice ?? product.price} ₽`}
+              />
+            </ListItem>
+            <Divider />
+          </Box>
         ))}
-      </Grid>
-
-      {/* <Stack alignItems="center" sx={{ mt: 3 }}>
-
-      </Stack> */}
+        </List>
+      </Paper>
     </Container>
   );
 }
