@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Container, Stack, TextField, Typography } from "@mui/material";
 import { isAxiosError } from "axios";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
@@ -19,12 +19,12 @@ type ProductFormValues = z.infer<typeof productSchema>;
 
 function CreateProductPage() {
   const navigate = useNavigate();
-  const [submitError, setSubmitError] = useState("");
+  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -34,20 +34,23 @@ function CreateProductPage() {
     },
   });
 
-  const onSubmit = async (data: ProductFormValues) => {
-    setSubmitError("");
-
-    try {
-      await createProduct(data);
+  const createMutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
       navigate("/products");
-    } catch (error) {
-      setSubmitError(
-        isAxiosError(error) && typeof error.response?.data?.message === "string"
-          ? error.response.data.message
-          : "Не удалось создать товар",
-      );
-    }
+    },
+  });
+
+  const onSubmit = (data: ProductFormValues) => {
+    createMutation.mutate(data);
   };
+
+  const submitError =
+    isAxiosError(createMutation.error) &&
+    typeof createMutation.error.response?.data?.message === "string"
+      ? createMutation.error.response.data.message
+      : "Не удалось создать товар";
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -56,7 +59,7 @@ function CreateProductPage() {
       </Typography>
 
       <Stack component="form" onSubmit={handleSubmit(onSubmit)} spacing={2} noValidate>
-        {submitError && <Alert severity="error">{submitError}</Alert>}
+        {createMutation.isError && <Alert severity="error">{submitError}</Alert>}
 
         <TextField
           label="Название"
@@ -82,8 +85,8 @@ function CreateProductPage() {
           helperText={errors.description?.message}
         />
 
-        <Button type="submit" variant="contained" disabled={isSubmitting}>
-          {isSubmitting ? "Создание..." : "Создать товар"}
+        <Button type="submit" variant="contained" disabled={createMutation.isPending}>
+          {createMutation.isPending ? "Создание..." : "Создать товар"}
         </Button>
       </Stack>
     </Container>

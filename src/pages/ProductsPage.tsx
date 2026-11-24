@@ -14,15 +14,25 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { getProducts } from "../api/products.api";
 import { baseUrl } from "../api/apiClient";
+import { useEffect } from "react";
 
 function ProductsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const page = Number(searchParams.get("page") ?? "1");
+
+  const stepPageHandle = (newValue: number) => {
+    setSearchParams({
+      page: String(newValue),
+    });
+  };
 
   const { data, isPending, isError } = useQuery({
-    queryKey: ["products"],
-    queryFn: () => getProducts(),
+    queryKey: ["products", page],
+    queryFn: () => getProducts({page, limit: 5}),
   });
 
   if (isPending) {
@@ -41,37 +51,47 @@ function ProductsPage() {
         Товары
       </Typography>
 
-      <Button component={Link} to="/products/create" variant="contained" sx={{ mb: 2 }}>
+      <Button
+        component={Link}
+        to="/products/create"
+        variant="contained"
+        sx={{ mb: 2 }}
+      >
         Добавить товар
       </Button>
 
       <Paper variant="outlined">
         <List disablePadding sx={{ display: "block" }}>
-        {data.items.map((product) => (
-          <Box key={product.id}>
-            <ListItem
-              secondaryAction={
-                <Button component={Link} to={`/product/${product.id}`}>
-                  Подробнее
-                </Button>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar
-                  variant="rounded"
-                  src={`${baseUrl}${product.image}`}
-                  alt={product.name}
-                  sx={{ width: 56, height: 56, mr: 2 }}
+          {data.items.map((product) => (
+            <Box key={product.id}>
+              <ListItem
+                secondaryAction={
+                  <Button component={Link} to={`/product/${product.id}`}>
+                    Подробнее
+                  </Button>
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    src={`${baseUrl}${product.image}`}
+                    alt={product.name}
+                    sx={{ width: 56, height: 56, mr: 2 }}
+                  />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={product.name}
+                  secondary={`${product.discountPrice ?? product.price} ₽`}
                 />
-              </ListItemAvatar>
-              <ListItemText
-                primary={product.name}
-                secondary={`${product.discountPrice ?? product.price} ₽`}
-              />
-            </ListItem>
-            <Divider />
-          </Box>
-        ))}
+              </ListItem>
+              <Divider />
+            </Box>
+          ))}
+          <List>
+            <Button onClick={() => stepPageHandle(page + 1)}>
+              Click
+            </Button>
+          </List>
         </List>
       </Paper>
     </Container>
