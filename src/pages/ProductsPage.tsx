@@ -17,7 +17,6 @@ import {
 import { Link, useSearchParams } from "react-router";
 import { getProducts } from "../api/products.api";
 import { baseUrl } from "../api/apiClient";
-import { useEffect } from "react";
 
 function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();

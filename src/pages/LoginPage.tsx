@@ -1,17 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Alert,
-  Button,
-  Link as MuiLink,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useState } from "react";
+import z from "zod";
+import { Alert, Button, Link as MuiLink, Paper, Stack, TextField, Typography,} from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router";
-import z from "zod";
+import { useAuth } from "../providers/AuthProvider";
 
 const loginSchema = z.object({
   email: z
@@ -27,13 +19,12 @@ type LoginValues = z.infer<typeof loginSchema>;
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [submitError, setSubmitError] = useState("");
+  const { login, loginError } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    reset,
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -41,7 +32,13 @@ function LoginPage() {
   });
 
   const onSubmit = async (data: LoginValues) => {
-    setSubmitError("");
+    try {
+      await login(data);
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      navigate(from || "/tasks", { replace: true });
+    } catch {
+      // Ошибка уже сохранена и показана через AuthProvider.
+    }
   };
 
   return (
@@ -59,7 +56,7 @@ function LoginPage() {
         noValidate
         spacing={2.5}
       >
-        {submitError && <Alert severity="error">{submitError}</Alert>}
+        {loginError && <Alert severity="error">{loginError}</Alert>}
         <TextField
           label="Email"
           type="email"
@@ -86,6 +83,7 @@ function LoginPage() {
           variant="contained"
           size="large"
           disabled={isSubmitting}
+          loading={isSubmitting}
         >
           Войти
         </Button>
